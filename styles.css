@@ -111,15 +111,42 @@ td {
     color: #333;
 }
 
-/* Status colors for name/shift */
-.manage-mode .normal .cell { background-color: #ffffff; }
-.manage-mode .tardy .cell { background-color: #fff3cd; }
-.manage-mode .absent .cell { background-color: #f8d7da; }
+/* Base status colors for name and shift cells */
+.manage-mode td.normal .cell,
+.manage-mode td.not-clocked .cell { 
+    background-color: #ffffff; 
+}
+
+/* Status colors for tardy/absent */
+.manage-mode td.tardy .cell:not(.clocked-in) { 
+    background-color: #fff3cd; 
+}
+.manage-mode td.absent .cell:not(.clocked-in) { 
+    background-color: #f8d7da; 
+}
+
+/* Clocked status - higher specificity to override tardy/absent */
+.manage-mode td.clocked-in .cell,
+.manage-mode td:has(.cell.clocked-in) ~ td .cell { 
+    background-color: #d4edda !important; 
+}
+
+.manage-mode td.clocked-out .cell,
+.manage-mode td:has(.cell.clocked-out) ~ td .cell { 
+    background-color: #e9ecef !important;
+    text-decoration: line-through;
+}
 
 /* Status colors for breaks and lunch */
 .manage-mode .not-started .cell { background-color: #ffffff; }
 .manage-mode .on-break .cell { background-color: #fff3cd; }
 .manage-mode .returned .cell { background-color: #d4edda; }
+
+/* When clocked out, apply grey to all cells in the row */
+.manage-mode tr:has(td.clocked-out) td .cell {
+    background-color: #e9ecef !important;
+    text-decoration: line-through;
+}
 
 /* Transitions */
 .cell {
