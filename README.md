@@ -1,0 +1,1 @@
+An app to keep track of employees' shifts. Vanilla HTML, CSS, JS. Made with Claude Code.

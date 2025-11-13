@@ -63,6 +63,15 @@ class EmployeeState {
         this.saveState();
     }
 
+    deleteRow(index) {
+        if (this.state.length > 1) {
+            this.state.splice(index, 1);
+        } else {
+            this.state[0] = this.createEmptyEmployee();
+        }
+        this.saveState();
+    }
+
     toggleMode() {
         this.isEditMode = !this.isEditMode;
         this.saveState();
@@ -274,7 +283,27 @@ class DashboardUI {
             row.appendChild(td);
         });
 
+        // Add delete button cell
+        const deleteTd = document.createElement('td');
+        deleteTd.className = 'actions-cell';
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.title = 'Delete row';
+        
+        deleteBtn.addEventListener('click', () => {
+            this.deleteEmployee(index);
+        });
+        
+        deleteTd.appendChild(deleteBtn);
+        row.appendChild(deleteTd);
+
         return row;
+    }
+
+    deleteEmployee(index) {
+        this.state.deleteRow(index);
+        this.initializeTable();
     }
 }
 
