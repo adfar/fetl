@@ -189,29 +189,6 @@ class DashboardUI {
         fields.forEach(field => {
             const td = document.createElement('td');
             td.className = employee[field].status;
-
-            // Set initial status classes for name/shift cells
-            if (field === 'name' || field === 'shift') {
-                // First create all cells, then apply shared status
-                if (field === 'shift') {
-                    const nameCell = row.querySelector('td:nth-child(1)');
-                    const shiftCell = row.querySelector('td:nth-child(2)');
-                    
-                    if (nameCell && shiftCell) {
-                        // Apply name status to both cells
-                        if (employee.name.status === 'clocked-in' || employee.name.status === 'clocked-out') {
-                            nameCell.classList.add(employee.name.status);
-                            shiftCell.classList.add(employee.name.status);
-                        }
-                        
-                        // Apply shift status to both cells
-                        if (employee.shift.status === 'tardy' || employee.shift.status === 'absent') {
-                            nameCell.classList.add(employee.shift.status);
-                            shiftCell.classList.add(employee.shift.status);
-                        }
-                    }
-                }
-            }
             
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -249,31 +226,9 @@ class DashboardUI {
                     const nameCell = row.querySelector('td:nth-child(1)');
                     const shiftCell = row.querySelector('td:nth-child(2)');
 
-                    // Handle shift status changes
-                    if (field === 'shift' && (newState.status === 'tardy' || newState.status === 'absent')) {
-                        nameCell.classList.add(newState.status);
-                        shiftCell.classList.add(newState.status);
-                    } else if (field === 'shift' && newState.status === 'normal') {
-                        nameCell.classList.remove('tardy', 'absent');
-                        shiftCell.classList.remove('tardy', 'absent');
-                    }
-
-                    // Handle name status changes
-                    if (field === 'name') {
-                        if (newState.status === 'clocked-in') {
-                            nameCell.classList.add('clocked-in');
-                            shiftCell.classList.add('clocked-in');
-                            nameCell.classList.remove('clocked-out');
-                            shiftCell.classList.remove('clocked-out');
-                        } else if (newState.status === 'clocked-out') {
-                            nameCell.classList.add('clocked-out');
-                            shiftCell.classList.add('clocked-out');
-                            nameCell.classList.remove('clocked-in');
-                            shiftCell.classList.remove('clocked-in');
-                        } else {
-                            nameCell.classList.remove('clocked-in', 'clocked-out');
-                            shiftCell.classList.remove('clocked-in', 'clocked-out');
-                        }
+                    // Update cross-field styles after status change
+                    if (field === 'name' || field === 'shift') {
+                        this.updateCrossFieldStyles(row, index);
                     }
                 }
             });
@@ -298,7 +253,50 @@ class DashboardUI {
         deleteTd.appendChild(deleteBtn);
         row.appendChild(deleteTd);
 
+        // Apply cross-field status classes after all cells are created
+        this.applyCrossFieldStyles(row, employee);
+
         return row;
+    }
+
+    applyCrossFieldStyles(row, employee) {
+        const nameCell = row.querySelector('td:nth-child(1)');
+        const shiftCell = row.querySelector('td:nth-child(2)');
+        
+        if (nameCell && shiftCell) {
+            // Apply name status to both name and shift cells
+            if (employee.name.status === 'clocked-in') {
+                nameCell.classList.add('clocked-in');
+                shiftCell.classList.add('clocked-in');
+            } else if (employee.name.status === 'clocked-out') {
+                nameCell.classList.add('clocked-out');
+                shiftCell.classList.add('clocked-out');
+            }
+            
+            // Apply shift status to both name and shift cells
+            if (employee.shift.status === 'tardy') {
+                nameCell.classList.add('tardy');
+                shiftCell.classList.add('tardy');
+            } else if (employee.shift.status === 'absent') {
+                nameCell.classList.add('absent');
+                shiftCell.classList.add('absent');
+            }
+        }
+    }
+
+    updateCrossFieldStyles(row, index) {
+        const employee = this.state.state[index];
+        const nameCell = row.querySelector('td:nth-child(1)');
+        const shiftCell = row.querySelector('td:nth-child(2)');
+        
+        if (nameCell && shiftCell) {
+            // Clear all cross-field classes
+            nameCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
+            shiftCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
+            
+            // Reapply current status classes
+            this.applyCrossFieldStyles(row, employee);
+        }
     }
 
     deleteEmployee(index) {
