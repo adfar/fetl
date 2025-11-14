@@ -244,6 +244,7 @@ class DashboardUI {
         
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '×';
         deleteBtn.title = 'Delete row';
         
         deleteBtn.addEventListener('click', () => {
