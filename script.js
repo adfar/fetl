@@ -14,6 +14,18 @@ class EmployeeState {
                 const parsed = JSON.parse(savedState);
                 this.state = Array.isArray(parsed.employees) ? parsed.employees : [this.createEmptyEmployee()];
                 this.isEditMode = Boolean(parsed.isEditMode);
+                
+                // Migrate old 'shift' field to 'shiftStart' and 'shiftEnd'
+                this.state = this.state.map(employee => {
+                    if (employee.shift && !employee.shiftStart && !employee.shiftEnd) {
+                        const newEmployee = { ...employee };
+                        newEmployee.shiftStart = { ...employee.shift };
+                        newEmployee.shiftEnd = { text: '', status: 'normal' };
+                        delete newEmployee.shift;
+                        return newEmployee;
+                    }
+                    return employee;
+                });
             } else {
                 console.log('No saved state found, creating initial state');
                 this.state = [this.createEmptyEmployee()];
@@ -51,7 +63,8 @@ class EmployeeState {
         console.log('Creating new empty employee row');
         return {
             name: { text: '', status: 'not-clocked' },
-            shift: { text: '', status: 'normal' },
+            shiftStart: { text: '', status: 'normal' },
+            shiftEnd: { text: '', status: 'normal' },
             firstBreak: { text: '', status: 'not-started' },
             lunch: { text: '', status: 'not-started' },
             secondBreak: { text: '', status: 'not-started' }
@@ -86,7 +99,8 @@ class EmployeeState {
         if (updates.status !== undefined) {
             const statusCycles = {
                 name: ['not-clocked', 'clocked-in', 'clocked-out'],
-                shift: ['normal', 'tardy', 'absent'],
+                shiftStart: ['normal', 'tardy', 'absent'],
+                shiftEnd: ['normal', 'tardy', 'absent'],
                 firstBreak: ['not-started', 'on-break', 'returned'],
                 lunch: ['not-started', 'on-break', 'returned'],
                 secondBreak: ['not-started', 'on-break', 'returned']
@@ -184,7 +198,7 @@ class DashboardUI {
     createRow(employee, index) {
         console.log(`Creating row for index ${index}`, employee);
         const row = document.createElement('tr');
-        const fields = ['name', 'shift', 'firstBreak', 'lunch', 'secondBreak'];
+        const fields = ['name', 'shiftStart', 'shiftEnd', 'firstBreak', 'lunch', 'secondBreak'];
         
         fields.forEach(field => {
             const td = document.createElement('td');
@@ -194,19 +208,26 @@ class DashboardUI {
             cell.className = 'cell';
             
             const input = document.createElement('input');
-            input.type = 'text';
-            input.value = employee[field].text;
-            // Set appropriate placeholder based on field
+            
+            // Set input type and placeholder based on field
             switch (field) {
                 case 'name':
-                    input.placeholder = 'Enter name';
+                    input.type = 'text';
+                    input.placeholder = 'Name';
                     break;
-                case 'shift':
-                    input.placeholder = 'Enter shift';
+                case 'shiftStart':
+                case 'shiftEnd':
+                case 'firstBreak':
+                case 'lunch':
+                case 'secondBreak':
+                    input.type = 'time';
                     break;
                 default:
+                    input.type = 'text';
                     input.placeholder = 'Enter time';
             }
+            
+            input.value = employee[field].text;
             
             // Handle text input (only in edit mode)
             input.addEventListener('change', (e) => {
@@ -224,10 +245,11 @@ class DashboardUI {
                     td.className = newState.status;
                     
                     const nameCell = row.querySelector('td:nth-child(1)');
-                    const shiftCell = row.querySelector('td:nth-child(2)');
+                    const shiftStartCell = row.querySelector('td:nth-child(2)');
+                    const shiftEndCell = row.querySelector('td:nth-child(3)');
 
                     // Update cross-field styles after status change
-                    if (field === 'name' || field === 'shift') {
+                    if (field === 'name' || field === 'shiftStart' || field === 'shiftEnd') {
                         this.updateCrossFieldStyles(row, index);
                     }
                 }
@@ -262,25 +284,41 @@ class DashboardUI {
 
     applyCrossFieldStyles(row, employee) {
         const nameCell = row.querySelector('td:nth-child(1)');
-        const shiftCell = row.querySelector('td:nth-child(2)');
+        const shiftStartCell = row.querySelector('td:nth-child(2)');
+        const shiftEndCell = row.querySelector('td:nth-child(3)');
         
-        if (nameCell && shiftCell) {
-            // Apply name status to both name and shift cells
+        if (nameCell && shiftStartCell && shiftEndCell) {
+            // Apply name status to name and shift cells
             if (employee.name.status === 'clocked-in') {
                 nameCell.classList.add('clocked-in');
-                shiftCell.classList.add('clocked-in');
+                shiftStartCell.classList.add('clocked-in');
+                shiftEndCell.classList.add('clocked-in');
             } else if (employee.name.status === 'clocked-out') {
                 nameCell.classList.add('clocked-out');
-                shiftCell.classList.add('clocked-out');
+                shiftStartCell.classList.add('clocked-out');
+                shiftEndCell.classList.add('clocked-out');
             }
             
-            // Apply shift status to both name and shift cells
-            if (employee.shift.status === 'tardy') {
+            // Apply shift start status to name and shift cells
+            if (employee.shiftStart.status === 'tardy') {
                 nameCell.classList.add('tardy');
-                shiftCell.classList.add('tardy');
-            } else if (employee.shift.status === 'absent') {
+                shiftStartCell.classList.add('tardy');
+                shiftEndCell.classList.add('tardy');
+            } else if (employee.shiftStart.status === 'absent') {
                 nameCell.classList.add('absent');
-                shiftCell.classList.add('absent');
+                shiftStartCell.classList.add('absent');
+                shiftEndCell.classList.add('absent');
+            }
+            
+            // Apply shift end status to name and shift cells
+            if (employee.shiftEnd.status === 'tardy') {
+                nameCell.classList.add('tardy');
+                shiftStartCell.classList.add('tardy');
+                shiftEndCell.classList.add('tardy');
+            } else if (employee.shiftEnd.status === 'absent') {
+                nameCell.classList.add('absent');
+                shiftStartCell.classList.add('absent');
+                shiftEndCell.classList.add('absent');
             }
         }
     }
@@ -288,12 +326,14 @@ class DashboardUI {
     updateCrossFieldStyles(row, index) {
         const employee = this.state.state[index];
         const nameCell = row.querySelector('td:nth-child(1)');
-        const shiftCell = row.querySelector('td:nth-child(2)');
+        const shiftStartCell = row.querySelector('td:nth-child(2)');
+        const shiftEndCell = row.querySelector('td:nth-child(3)');
         
-        if (nameCell && shiftCell) {
+        if (nameCell && shiftStartCell && shiftEndCell) {
             // Clear all cross-field classes
             nameCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
-            shiftCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
+            shiftStartCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
+            shiftEndCell.classList.remove('clocked-in', 'clocked-out', 'tardy', 'absent');
             
             // Reapply current status classes
             this.applyCrossFieldStyles(row, employee);
