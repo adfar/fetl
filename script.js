@@ -157,7 +157,7 @@ class DashboardUI {
         this.toggleModeBtn.addEventListener('click', () => {
             console.log('Toggle mode button clicked');
             const isEditMode = this.state.toggleMode();
-            this.toggleModeBtn.textContent = isEditMode ? 'Switch to Manage Mode' : 'Switch to Edit Mode';
+            this.toggleModeBtn.textContent = isEditMode ? 'Manage Mode' : 'Edit Mode';
             this.table.className = isEditMode ? 'edit-mode' : 'manage-mode';
             console.log('Mode switched to:', isEditMode ? 'edit' : 'manage');
         });
@@ -171,7 +171,7 @@ class DashboardUI {
             
             // Set initial mode
             this.table.className = this.state.isEditMode ? 'edit-mode' : 'manage-mode';
-            this.toggleModeBtn.textContent = this.state.isEditMode ? 'Switch to Manage Mode' : 'Switch to Edit Mode';
+            this.toggleModeBtn.textContent = this.state.isEditMode ? 'Manage Mode' : 'Edit Mode';
             
             // Add rows for existing state
             this.state.state.forEach((_, index) => {
