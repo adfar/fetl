@@ -11,6 +11,7 @@
         <div class="controls">
             <button id="addRowBtn" class="control-btn">Add Row</button>
             <button id="toggleModeBtn" class="control-btn">Switch to Manage Mode</button>
+            <button id="resetBtn" class="control-btn reset-btn">Reset All</button>
         </div>
         <div class="table-container">
             <table id="employeeTable" class="edit-mode">
@@ -31,6 +32,23 @@
             </table>
         </div>
     </div>
+    
+    <!-- Custom Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message">Are you sure you want to reset all data? This cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="control-btn modal-cancel-btn">Cancel</button>
+                <button id="modal-confirm" class="control-btn reset-btn">Reset All</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

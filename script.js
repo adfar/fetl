@@ -76,6 +76,12 @@ class EmployeeState {
         this.saveState();
     }
 
+    resetAll() {
+        this.state = [this.createEmptyEmployee()];
+        this.isEditMode = true;
+        this.saveState();
+    }
+
     deleteRow(index) {
         if (this.state.length > 1) {
             this.state.splice(index, 1);
@@ -129,9 +135,13 @@ class DashboardUI {
             this.tbody = document.getElementById('employeeRows');
             this.addRowBtn = document.getElementById('addRowBtn');
             this.toggleModeBtn = document.getElementById('toggleModeBtn');
+            this.resetBtn = document.getElementById('resetBtn');
             this.table = document.getElementById('employeeTable');
+            this.modal = document.getElementById('modal');
+            this.modalCancel = document.getElementById('modal-cancel');
+            this.modalConfirm = document.getElementById('modal-confirm');
             
-            if (!this.tbody || !this.addRowBtn || !this.toggleModeBtn || !this.table) {
+            if (!this.tbody || !this.addRowBtn || !this.toggleModeBtn || !this.resetBtn || !this.table || !this.modal || !this.modalCancel || !this.modalConfirm) {
                 throw new Error('Required DOM elements not found');
             }
         } catch (error) {
@@ -160,6 +170,37 @@ class DashboardUI {
             this.toggleModeBtn.textContent = isEditMode ? 'Manage Mode' : 'Edit Mode';
             this.table.className = isEditMode ? 'edit-mode' : 'manage-mode';
             console.log('Mode switched to:', isEditMode ? 'edit' : 'manage');
+        });
+
+        // Reset button
+        this.resetBtn.addEventListener('click', () => {
+            this.showModal();
+        });
+
+        // Modal event listeners
+        this.modalCancel.addEventListener('click', () => {
+            this.hideModal();
+        });
+
+        this.modalConfirm.addEventListener('click', () => {
+            console.log('Reset confirmed');
+            this.state.resetAll();
+            this.initializeTable();
+            this.hideModal();
+        });
+
+        // Close modal when clicking outside
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.hideModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !this.modal.classList.contains('hidden')) {
+                this.hideModal();
+            }
         });
     }
 
@@ -343,6 +384,14 @@ class DashboardUI {
     deleteEmployee(index) {
         this.state.deleteRow(index);
         this.initializeTable();
+    }
+
+    showModal() {
+        this.modal.classList.remove('hidden');
+    }
+
+    hideModal() {
+        this.modal.classList.add('hidden');
     }
 }
 
