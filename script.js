@@ -141,8 +141,13 @@ class DashboardUI {
             this.modalCancel = document.getElementById('modal-cancel');
             this.modalConfirm = document.getElementById('modal-confirm');
             
-            if (!this.tbody || !this.addRowBtn || !this.toggleModeBtn || !this.resetBtn || !this.table || !this.modal || !this.modalCancel || !this.modalConfirm) {
+            if (!this.tbody || !this.addRowBtn || !this.toggleModeBtn || !this.resetBtn || !this.table) {
                 throw new Error('Required DOM elements not found');
+            }
+            
+            // Modal elements are optional - log if missing but don't throw error
+            if (!this.modal || !this.modalCancel || !this.modalConfirm) {
+                console.warn('Modal elements not found, will use browser confirm as fallback');
             }
         } catch (error) {
             console.error('Error initializing UI:', error);
@@ -177,31 +182,33 @@ class DashboardUI {
             this.showModal();
         });
 
-        // Modal event listeners
-        this.modalCancel.addEventListener('click', () => {
-            this.hideModal();
-        });
-
-        this.modalConfirm.addEventListener('click', () => {
-            console.log('Reset confirmed');
-            this.state.resetAll();
-            this.initializeTable();
-            this.hideModal();
-        });
-
-        // Close modal when clicking outside
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) {
+        // Modal event listeners - only add if modal elements exist
+        if (this.modalCancel && this.modalConfirm && this.modal) {
+            this.modalCancel.addEventListener('click', () => {
                 this.hideModal();
-            }
-        });
+            });
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.modal.classList.contains('hidden')) {
+            this.modalConfirm.addEventListener('click', () => {
+                console.log('Reset confirmed');
+                this.state.resetAll();
+                this.initializeTable();
                 this.hideModal();
-            }
-        });
+            });
+
+            // Close modal when clicking outside
+            this.modal.addEventListener('click', (e) => {
+                if (e.target === this.modal) {
+                    this.hideModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.modal && !this.modal.classList.contains('hidden')) {
+                    this.hideModal();
+                }
+            });
+        }
     }
 
     initializeTable() {
@@ -387,11 +394,22 @@ class DashboardUI {
     }
 
     showModal() {
-        this.modal.classList.remove('hidden');
+        if (this.modal) {
+            this.modal.classList.remove('hidden');
+        } else {
+            // Fallback to browser confirm if modal not available
+            if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+                console.log('Reset confirmed via fallback');
+                this.state.resetAll();
+                this.initializeTable();
+            }
+        }
     }
 
     hideModal() {
-        this.modal.classList.add('hidden');
+        if (this.modal) {
+            this.modal.classList.add('hidden');
+        }
     }
 }
 
